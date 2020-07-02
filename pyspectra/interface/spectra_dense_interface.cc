@@ -25,8 +25,9 @@
 
 namespace py = pybind11;
 
-using Matrix =
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+// using Matrix =
+//     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+using Matrix = Eigen::MatrixXd;
 using Vector = Eigen::VectorXd;
 using Eigen::Index;
 
