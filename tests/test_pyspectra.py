@@ -1,28 +1,32 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+"""Tests for the pyspectra module."""
+import numpy as np
 
-"""Tests for the pyspectra module.
-"""
-import pytest
-
-from pyspectra import pyspectra
+from pyspectra import spectra_dense_interface
 
 
-def test_something():
-    assert True
+def norm(vs: np.array) -> float:
+    """Compute the norm of a vector."""
+    return np.sqrt(np.dot(vs, vs))
 
 
-def test_with_error():
-    with pytest.raises(ValueError):
-        # Do something that raises a ValueError
-        raise(ValueError)
+def test_dense_symmetric():
+    """Test the interface to Spectra::SymEigsSolver"""
+    # Number of rows/columns
+    size = 100
 
+    # Eigenpairs to compute
+    pairs = 2
+    search_space = pairs * 5
 
-# Fixture example
-@pytest.fixture
-def an_object():
-    return {}
+    # create symmetric matrix
+    xs = np.random.normal(size=10000).reshape(size, size)
+    mat = xs + xs.T
 
+    selection = "LargestAlge"
 
-def test_pyspectra(an_object):
-    assert an_object == {}
+    es, cs = spectra_dense_interface.symmetric_eigensolver(
+        mat, pairs, search_space, selection)
+    for i, value in enumerate(es):
+        residue = np.dot(mat, cs[:, i]) - value * cs[:, i]
+        assert norm(residue) < 1e-8

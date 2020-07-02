@@ -23,6 +23,7 @@ jobs:
           python --version
       - name: Install dependencies
         run: |
+          pip install cython
           pip install -e .[test]
       - name: Test
         run: |

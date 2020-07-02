@@ -1,18 +1,20 @@
-// Copyright (C) 2018-2019 Yixuan Qiu <yixuan.qiu@cos.name>
+// Copyright (C) 2018-2020 Yixuan Qiu <yixuan.qiu@cos.name>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef SYM_EIGS_BASE_H
-#define SYM_EIGS_BASE_H
+#ifndef SPECTRA_SYM_EIGS_BASE_H
+#define SPECTRA_SYM_EIGS_BASE_H
 
 #include <Eigen/Core>
 #include <vector>     // std::vector
-#include <cmath>      // std::abs, std::pow, std::sqrt
-#include <algorithm>  // std::min, std::copy
+#include <cmath>      // std::abs, std::pow
+#include <algorithm>  // std::min
 #include <stdexcept>  // std::invalid_argument
+#include <utility>    // std::move
 
+#include "Util/Version.h"
 #include "Util/TypeTraits.h"
 #include "Util/SelectionRule.h"
 #include "Util/CompInfo.h"
@@ -38,62 +40,78 @@ namespace Spectra {
 /// such as SymEigsSolver and SymEigsShiftSolver.
 ///
 template <typename Scalar,
-          int SelectionRule,
           typename OpType,
           typename BOpType>
 class SymEigsBase
 {
 private:
-    typedef Eigen::Index Index;
-    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Matrix;
-    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> Vector;
-    typedef Eigen::Array<Scalar, Eigen::Dynamic, 1> Array;
-    typedef Eigen::Array<bool, Eigen::Dynamic, 1> BoolArray;
-    typedef Eigen::Map<Matrix> MapMat;
-    typedef Eigen::Map<Vector> MapVec;
-    typedef Eigen::Map<const Vector> MapConstVec;
+    using Index = Eigen::Index;
+    using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
+    using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+    using Array = Eigen::Array<Scalar, Eigen::Dynamic, 1>;
+    using BoolArray = Eigen::Array<bool, Eigen::Dynamic, 1>;
+    using MapMat = Eigen::Map<Matrix>;
+    using MapVec = Eigen::Map<Vector>;
+    using MapConstVec = Eigen::Map<const Vector>;
 
-    typedef ArnoldiOp<Scalar, OpType, BOpType> ArnoldiOpType;
-    typedef Lanczos<Scalar, ArnoldiOpType> LanczosFac;
+    using ArnoldiOpType = ArnoldiOp<Scalar, OpType, BOpType>;
+    using LanczosFac = Lanczos<Scalar, ArnoldiOpType>;
 
 protected:
     // clang-format off
-    OpType*      m_op;         // object to conduct matrix operation,
-                               // e.g. matrix-vector product
-    const Index  m_n;          // dimension of matrix A
-    const Index  m_nev;        // number of eigenvalues requested
-    const Index  m_ncv;        // dimension of Krylov subspace in the Lanczos method
-    Index        m_nmatop;     // number of matrix operations called
-    Index        m_niter;      // number of restarting iterations
 
-    LanczosFac   m_fac;        // Lanczos factorization
-    Vector       m_ritz_val;   // Ritz values
+    // In SymEigsSolver and SymEigsShiftSolver, the A operator is an lvalue provided by
+    // the user. In SymGEigsSolver, the A operator is an rvalue. To avoid copying objects,
+    // we use the following scheme:
+    // 1. If the op parameter in the constructor is an lvalue, make m_op a const reference to op
+    // 2. If op is an rvalue, move op to m_op_container, and then make m_op a const
+    //    reference to m_op_container[0]
+    std::vector<OpType> m_op_container;
+    const OpType& m_op;         // matrix operator for A
+    const Index   m_n;          // dimension of matrix A
+    const Index   m_nev;        // number of eigenvalues requested
+    const Index   m_ncv;        // dimension of Krylov subspace in the Lanczos method
+    Index         m_nmatop;     // number of matrix operations called
+    Index         m_niter;      // number of restarting iterations
+
+    LanczosFac    m_fac;        // Lanczos factorization
+    Vector        m_ritz_val;   // Ritz values
 
 private:
-    Matrix       m_ritz_vec;   // Ritz vectors
-    Vector       m_ritz_est;   // last row of m_ritz_vec, also called the Ritz estimates
-    BoolArray    m_ritz_conv;  // indicator of the convergence of Ritz values
-    int          m_info;       // status of the computation
-
-    const Scalar m_near_0;     // a very small value, but 1.0 / m_near_0 does not overflow
-                               // ~= 1e-307 for the "double" type
-    const Scalar m_eps;        // the machine precision, ~= 1e-16 for the "double" type
-    const Scalar m_eps23;      // m_eps^(2/3), used to test the convergence
+    Matrix        m_ritz_vec;   // Ritz vectors
+    Vector        m_ritz_est;   // last row of m_ritz_vec, also called the Ritz estimates
+    BoolArray     m_ritz_conv;  // indicator of the convergence of Ritz values
+    CompInfo      m_info;       // status of the computation
     // clang-format on
 
-    // Implicitly restarted Lanczos factorization
-    void restart(Index k)
+    // Move rvalue object to the container
+    static std::vector<OpType> create_op_container(OpType&& rval)
     {
+        std::vector<OpType> container;
+        container.emplace_back(std::move(rval));
+        return container;
+    }
+
+    // Implicitly restarted Lanczos factorization
+    void restart(Index k, SortRule selection)
+    {
+        using std::abs;
+
         if (k >= m_ncv)
             return;
 
         TridiagQR<Scalar> decomp(m_ncv);
         Matrix Q = Matrix::Identity(m_ncv, m_ncv);
 
-        for (Index i = k; i < m_ncv; i++)
+        // Apply large shifts first
+        const int nshift = m_ncv - k;
+        Vector shifts = m_ritz_val.tail(nshift);
+        std::sort(shifts.data(), shifts.data() + nshift, [](const Scalar& v1, const Scalar& v2) { return abs(v1) > abs(v2); });
+
+        for (Index i = 0; i < nshift; i++)
         {
             // QR decomposition of H-mu*I, mu is the shift
-            decomp.compute(m_fac.matrix_H(), m_ritz_val[i]);
+            decomp.compute(m_fac.matrix_H(), shifts[i]);
 
             // Q -> Q * Qi
             decomp.apply_YQ(Q);
@@ -106,19 +124,27 @@ private:
         m_fac.compress_V(Q);
         m_fac.factorize_from(k, m_ncv, m_nmatop);
 
-        retrieve_ritzpair();
+        retrieve_ritzpair(selection);
     }
 
     // Calculates the number of converged Ritz values
-    Index num_converged(Scalar tol)
+    Index num_converged(const Scalar& tol)
     {
-        // thresh = tol * max(m_eps23, abs(theta)), theta for Ritz value
-        Array thresh = tol * m_ritz_val.head(m_nev).array().abs().max(m_eps23);
+        using std::pow;
+
+        // The machine precision, ~= 1e-16 for the "double" type
+        constexpr Scalar eps = TypeTraits<Scalar>::epsilon();
+        // std::pow() is not constexpr, so we do not declare eps23 to be constexpr
+        // But most compilers should be able to compute eps23 at compile time
+        const Scalar eps23 = pow(eps, Scalar(2) / 3);
+
+        // thresh = tol * max(eps23, abs(theta)), theta for Ritz value
+        Array thresh = tol * m_ritz_val.head(m_nev).array().abs().max(eps23);
         Array resid = m_ritz_est.head(m_nev).array().abs() * m_fac.f_norm();
         // Converged "wanted" Ritz values
         m_ritz_conv = (resid < thresh);
 
-        return m_ritz_conv.cast<Index>().sum();
+        return m_ritz_conv.count();
     }
 
     // Returns the adjusted nev for restarting
@@ -126,9 +152,13 @@ private:
     {
         using std::abs;
 
+        // A very small value, but 1.0 / near_0 does not overflow
+        // ~= 1e-307 for the "double" type
+        constexpr Scalar near_0 = TypeTraits<Scalar>::min() * Scalar(10);
+
         Index nev_new = m_nev;
         for (Index i = m_nev; i < m_ncv; i++)
-            if (abs(m_ritz_est[i]) < m_near_0)
+            if (abs(m_ritz_est[i]) < near_0)
                 nev_new++;
 
         // Adjust nev_new, according to dsaup2.f line 677~684 in ARPACK
@@ -145,26 +175,55 @@ private:
     }
 
     // Retrieves and sorts Ritz values and Ritz vectors
-    void retrieve_ritzpair()
+    void retrieve_ritzpair(SortRule selection)
     {
         TridiagEigen<Scalar> decomp(m_fac.matrix_H());
         const Vector& evals = decomp.eigenvalues();
         const Matrix& evecs = decomp.eigenvectors();
 
-        SortEigenvalue<Scalar, SelectionRule> sorting(evals.data(), evals.size());
-        std::vector<int> ind = sorting.index();
+        // Sort Ritz values and put the wanted ones at the beginning
+        std::vector<Index> ind;
+        switch (selection)
+        {
+            case SortRule::LargestMagn:
+            {
+                SortEigenvalue<Scalar, SortRule::LargestMagn> sorting(evals.data(), m_ncv);
+                sorting.swap(ind);
+                break;
+            }
+            case SortRule::BothEnds:
+            case SortRule::LargestAlge:
+            {
+                SortEigenvalue<Scalar, SortRule::LargestAlge> sorting(evals.data(), m_ncv);
+                sorting.swap(ind);
+                break;
+            }
+            case SortRule::SmallestMagn:
+            {
+                SortEigenvalue<Scalar, SortRule::SmallestMagn> sorting(evals.data(), m_ncv);
+                sorting.swap(ind);
+                break;
+            }
+            case SortRule::SmallestAlge:
+            {
+                SortEigenvalue<Scalar, SortRule::SmallestAlge> sorting(evals.data(), m_ncv);
+                sorting.swap(ind);
+                break;
+            }
+            default:
+                throw std::invalid_argument("unsupported selection rule");
+        }
 
-        // For BOTH_ENDS, the eigenvalues are sorted according
-        // to the LARGEST_ALGE rule, so we need to move those smallest
-        // values to the left
+        // For SortRule::BothEnds, the eigenvalues are sorted according to the
+        // SortRule::LargestAlge rule, so we need to move those smallest values to the left
         // The order would be
-        // Largest => Smallest => 2nd largest => 2nd smallest => ...
+        //     Largest => Smallest => 2nd largest => 2nd smallest => ...
         // We keep this order since the first k values will always be
         // the wanted collection, no matter k is nev_updated (used in restart())
         // or is nev (used in sort_ritzpair())
-        if (SelectionRule == BOTH_ENDS)
+        if (selection == SortRule::BothEnds)
         {
-            std::vector<int> ind_copy(ind);
+            std::vector<Index> ind_copy(ind);
             for (Index i = 0; i < m_ncv; i++)
             {
                 // If i is even, pick values from the left (large values)
@@ -191,32 +250,33 @@ private:
 protected:
     // Sorts the first nev Ritz pairs in the specified order
     // This is used to return the final results
-    virtual void sort_ritzpair(int sort_rule)
+    virtual void sort_ritzpair(SortRule sort_rule)
     {
-        // First make sure that we have a valid index vector
-        SortEigenvalue<Scalar, LARGEST_ALGE> sorting(m_ritz_val.data(), m_nev);
-        std::vector<int> ind = sorting.index();
-
+        std::vector<Index> ind;
         switch (sort_rule)
         {
-            case LARGEST_ALGE:
-                break;
-            case LARGEST_MAGN:
+            case SortRule::LargestAlge:
             {
-                SortEigenvalue<Scalar, LARGEST_MAGN> sorting(m_ritz_val.data(), m_nev);
-                ind = sorting.index();
+                SortEigenvalue<Scalar, SortRule::LargestAlge> sorting(m_ritz_val.data(), m_nev);
+                sorting.swap(ind);
                 break;
             }
-            case SMALLEST_ALGE:
+            case SortRule::LargestMagn:
             {
-                SortEigenvalue<Scalar, SMALLEST_ALGE> sorting(m_ritz_val.data(), m_nev);
-                ind = sorting.index();
+                SortEigenvalue<Scalar, SortRule::LargestMagn> sorting(m_ritz_val.data(), m_nev);
+                sorting.swap(ind);
                 break;
             }
-            case SMALLEST_MAGN:
+            case SortRule::SmallestAlge:
             {
-                SortEigenvalue<Scalar, SMALLEST_MAGN> sorting(m_ritz_val.data(), m_nev);
-                ind = sorting.index();
+                SortEigenvalue<Scalar, SortRule::SmallestAlge> sorting(m_ritz_val.data(), m_nev);
+                sorting.swap(ind);
+                break;
+            }
+            case SortRule::SmallestMagn:
+            {
+                SortEigenvalue<Scalar, SortRule::SmallestMagn> sorting(m_ritz_val.data(), m_nev);
+                sorting.swap(ind);
                 break;
             }
             default:
@@ -242,18 +302,35 @@ protected:
 public:
     /// \cond
 
-    SymEigsBase(OpType* op, BOpType* Bop, Index nev, Index ncv) :
+    // If op is an lvalue
+    SymEigsBase(OpType& op, const BOpType& Bop, Index nev, Index ncv) :
         m_op(op),
-        m_n(m_op->rows()),
+        m_n(op.rows()),
         m_nev(nev),
         m_ncv(ncv > m_n ? m_n : ncv),
         m_nmatop(0),
         m_niter(0),
         m_fac(ArnoldiOpType(op, Bop), m_ncv),
-        m_info(NOT_COMPUTED),
-        m_near_0(TypeTraits<Scalar>::min() * Scalar(10)),
-        m_eps(Eigen::NumTraits<Scalar>::epsilon()),
-        m_eps23(Eigen::numext::pow(m_eps, Scalar(2.0) / 3))
+        m_info(CompInfo::NotComputed)
+    {
+        if (nev < 1 || nev > m_n - 1)
+            throw std::invalid_argument("nev must satisfy 1 <= nev <= n - 1, n is the size of matrix");
+
+        if (ncv <= nev || ncv > m_n)
+            throw std::invalid_argument("ncv must satisfy nev < ncv <= n, n is the size of matrix");
+    }
+
+    // If op is an rvalue
+    SymEigsBase(OpType&& op, const BOpType& Bop, Index nev, Index ncv) :
+        m_op_container(create_op_container(std::move(op))),
+        m_op(m_op_container.front()),
+        m_n(m_op.rows()),
+        m_nev(nev),
+        m_ncv(ncv > m_n ? m_n : ncv),
+        m_nmatop(0),
+        m_niter(0),
+        m_fac(ArnoldiOpType(m_op, Bop), m_ncv),
+        m_info(CompInfo::NotComputed)
     {
         if (nev < 1 || nev > m_n - 1)
             throw std::invalid_argument("nev must satisfy 1 <= nev <= n - 1, n is the size of matrix");
@@ -316,26 +393,31 @@ public:
     ///
     /// Conducts the major computation procedure.
     ///
+    /// \param selection  An enumeration value indicating the selection rule of
+    ///                   the requested eigenvalues, for example `SortRule::LargestMagn`
+    ///                   to retrieve eigenvalues with the largest magnitude.
+    ///                   The full list of enumeration values can be found in
+    ///                   \ref Enumerations.
     /// \param maxit      Maximum number of iterations allowed in the algorithm.
     /// \param tol        Precision parameter for the calculated eigenvalues.
-    /// \param sort_rule  Rule to sort the eigenvalues and eigenvectors.
+    /// \param sorting    Rule to sort the eigenvalues and eigenvectors.
     ///                   Supported values are
-    ///                   `Spectra::LARGEST_ALGE`, `Spectra::LARGEST_MAGN`,
-    ///                   `Spectra::SMALLEST_ALGE` and `Spectra::SMALLEST_MAGN`,
-    ///                   for example `LARGEST_ALGE` indicates that largest eigenvalues
+    ///                   `SortRule::LargestAlge`, `SortRule::LargestMagn`,
+    ///                   `SortRule::SmallestAlge` and `SortRule::SmallestMagn`,
+    ///                   for example `SortRule::LargestAlge` indicates that largest eigenvalues
     ///                   come first. Note that this argument is only used to
     ///                   **sort** the final result, and the **selection** rule
     ///                   (e.g. selecting the largest or smallest eigenvalues in the
-    ///                   full spectrum) is specified by the template parameter
-    ///                   `SelectionRule` of SymEigsSolver.
+    ///                   full spectrum) is specified by the parameter `selection`.
     ///
     /// \return Number of converged eigenvalues.
     ///
-    Index compute(Index maxit = 1000, Scalar tol = 1e-10, int sort_rule = LARGEST_ALGE)
+    Index compute(SortRule selection = SortRule::LargestMagn, Index maxit = 1000,
+                  Scalar tol = 1e-10, SortRule sorting = SortRule::LargestAlge)
     {
         // The m-step Lanczos factorization
         m_fac.factorize_from(1, m_ncv, m_nmatop);
-        retrieve_ritzpair();
+        retrieve_ritzpair(selection);
         // Restarting
         Index i, nconv = 0, nev_adj;
         for (i = 0; i < maxit; i++)
@@ -345,13 +427,13 @@ public:
                 break;
 
             nev_adj = nev_adjusted(nconv);
-            restart(nev_adj);
+            restart(nev_adj, selection);
         }
         // Sorting results
-        sort_ritzpair(sort_rule);
+        sort_ritzpair(sorting);
 
         m_niter += i + 1;
-        m_info = (nconv >= m_nev) ? SUCCESSFUL : NOT_CONVERGING;
+        m_info = (nconv >= m_nev) ? CompInfo::Successful : CompInfo::NotConverging;
 
         return std::min(m_nev, nconv);
     }
@@ -360,7 +442,7 @@ public:
     /// Returns the status of the computation.
     /// The full list of enumeration values can be found in \ref Enumerations.
     ///
-    int info() const { return m_info; }
+    CompInfo info() const { return m_info; }
 
     ///
     /// Returns the number of iterations used in the computation.
@@ -381,7 +463,7 @@ public:
     ///
     Vector eigenvalues() const
     {
-        const Index nconv = m_ritz_conv.cast<Index>().sum();
+        const Index nconv = m_ritz_conv.count();
         Vector res(nconv);
 
         if (!nconv)
@@ -411,7 +493,7 @@ public:
     ///
     virtual Matrix eigenvectors(Index nvec) const
     {
-        const Index nconv = m_ritz_conv.cast<Index>().sum();
+        const Index nconv = m_ritz_conv.count();
         nvec = std::min(nvec, nconv);
         Matrix res(m_n, nvec);
 
@@ -445,4 +527,4 @@ public:
 
 }  // namespace Spectra
 
-#endif  // SYM_EIGS_BASE_H
+#endif  // SPECTRA_SYM_EIGS_BASE_H

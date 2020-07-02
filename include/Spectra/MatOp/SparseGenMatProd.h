@@ -1,17 +1,16 @@
-// Copyright (C) 2016-2019 Yixuan Qiu <yixuan.qiu@cos.name>
+// Copyright (C) 2016-2020 Yixuan Qiu <yixuan.qiu@cos.name>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef SPARSE_GEN_MAT_PROD_H
-#define SPARSE_GEN_MAT_PROD_H
+#ifndef SPECTRA_SPARSE_GEN_MAT_PROD_H
+#define SPECTRA_SPARSE_GEN_MAT_PROD_H
 
 #include <Eigen/Core>
 #include <Eigen/SparseCore>
 
 namespace Spectra {
-
 ///
 /// \ingroup MatOp
 ///
@@ -20,16 +19,17 @@ namespace Spectra {
 /// \f$x\f$. It is mainly used in the GenEigsSolver and SymEigsSolver
 /// eigen solvers.
 ///
-template <typename Scalar, int Flags = 0, typename StorageIndex = int>
+template <typename Scalar_, int Flags = Eigen::ColMajor, typename StorageIndex = int>
 class SparseGenMatProd
 {
 private:
-    typedef Eigen::Index Index;
-    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> Vector;
-    typedef Eigen::Map<const Vector> MapConstVec;
-    typedef Eigen::Map<Vector> MapVec;
-    typedef Eigen::SparseMatrix<Scalar, Flags, StorageIndex> SparseMatrix;
-    typedef const Eigen::Ref<const SparseMatrix> ConstGenericSparseMatrix;
+    using Scalar = Scalar_;
+    using Index = Eigen::Index;
+    using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+    using MapConstVec = Eigen::Map<const Vector>;
+    using MapVec = Eigen::Map<Vector>;
+    using SparseMatrix = Eigen::SparseMatrix<Scalar, Flags, StorageIndex>;
+    using ConstGenericSparseMatrix = const Eigen::Ref<const SparseMatrix>;
 
     ConstGenericSparseMatrix m_mat;
 
@@ -67,8 +67,24 @@ public:
         MapVec y(y_out, m_mat.rows());
         y.noalias() = m_mat * x;
     }
+
+    ///
+    /// Perform the matrix-matrix multiplication operation \f$y=Ax\f$.
+    ///
+    SparseMatrix operator*(const SparseMatrix& mat_in) const
+    {
+        return m_mat * mat_in;
+    }
+
+    ///
+    /// Extract (i,j) element of the underlying matrix.
+    ///
+    Scalar operator()(Index i, Index j) const
+    {
+        return m_mat.coeff(i, j);
+    }
 };
 
 }  // namespace Spectra
 
-#endif  // SPARSE_GEN_MAT_PROD_H
+#endif  // SPECTRA_SPARSE_GEN_MAT_PROD_H

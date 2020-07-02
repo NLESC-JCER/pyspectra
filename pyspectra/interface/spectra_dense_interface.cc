@@ -30,22 +30,37 @@ using Matrix =
 using Vector = Eigen::VectorXd;
 using Eigen::Index;
 
-std::pair<Vector, Matrix> symeigssolver(const Matrix &mat, Index nvalues, std::string selection)
+Spectra::SortRule string_to_sortrule(const std::string& name)
+{
+    std::unordered_map<std::string, Spectra::SortRule> rules = {
+        {"LargestMagn", Spectra::SortRule::LargestMagn},
+        {"LargestReal", Spectra::SortRule::LargestReal},
+        {"LargestImag", Spectra::SortRule::LargestImag},
+        {"LargestAlge", Spectra::SortRule::LargestAlge},
+        {"SmallestMagn", Spectra::SortRule::SmallestMagn},
+        {"SmallestReal", Spectra::SortRule::SmallestReal},
+        {"SmallestImag", Spectra::SortRule::SmallestImag},
+        {"SmallestAlge", Spectra::SortRule::SmallestAlge},
+        {"BothEnds", Spectra::SortRule::BothEnds}};
+    return rules.at(name);
+}
+
+std::pair<Vector, Matrix> symeigssolver(const Matrix& mat, Index nvalues, Index nvectors, const std::string& selection)
 {
     // Construct matrix operation object using the wrapper class DenseSymMatProd
     Spectra::DenseSymMatProd<double> op(mat);
 
-    //TODO: choose selection rule
-
     // Construct eigen solver object, requesting the largest three eigenvalues
-    Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double>> eigs(&op, nvalues, nvalues * 2);
+    Spectra::SymEigsSolver<double, Spectra::DenseSymMatProd<double>> eigs(op, nvalues, nvectors);
 
     // Initialize and compute
     eigs.init();
-    eigs.compute();
+    // Compute using the user provided selection rule
+    eigs.compute(Spectra::SortRule::LargestAlge);
+    // eigs.compute(string_to_sortrule(selection));
 
     // Retrieve results
-    if (eigs.info() == Spectra::SUCCESSFUL)
+    if (eigs.info() == Spectra::CompInfo::Successful)
     {
         return std::make_pair(eigs.eigenvalues(), eigs.eigenvectors());
     }
@@ -60,5 +75,5 @@ PYBIND11_MODULE(spectra_dense_interface, m)
     m.doc() = "Interface to the C++ spectra library, see: "
               "https://github.com/yixuan/spectra";
 
-    m.def("symetric_eigensolver", &symeigssolver, py::return_value_policy::reference_internal);
+    m.def("symmetric_eigensolver", &symeigssolver, py::return_value_policy::reference_internal);
 }

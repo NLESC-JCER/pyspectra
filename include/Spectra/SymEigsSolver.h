@@ -1,11 +1,11 @@
-// Copyright (C) 2016-2019 Yixuan Qiu <yixuan.qiu@cos.name>
+// Copyright (C) 2016-2020 Yixuan Qiu <yixuan.qiu@cos.name>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef SYM_EIGS_SOLVER_H
-#define SYM_EIGS_SOLVER_H
+#ifndef SPECTRA_SYM_EIGS_SOLVER_H
+#define SPECTRA_SYM_EIGS_SOLVER_H
 
 #include <Eigen/Core>
 
@@ -43,18 +43,13 @@ namespace Spectra {
 /// If the users need to define their own matrix-vector multiplication operation
 /// class, it should implement all the public member functions as in DenseSymMatProd.
 ///
-/// \tparam Scalar        The element type of the matrix.
-///                       Currently supported types are `float`, `double` and `long double`.
-/// \tparam SelectionRule An enumeration value indicating the selection rule of
-///                       the requested eigenvalues, for example `LARGEST_MAGN`
-///                       to retrieve eigenvalues with the largest magnitude.
-///                       The full list of enumeration values can be found in
-///                       \ref Enumerations.
-/// \tparam OpType        The name of the matrix operation class. Users could either
-///                       use the wrapper classes such as DenseSymMatProd and
-///                       SparseSymMatProd, or define their
-///                       own that implements all the public member functions as in
-///                       DenseSymMatProd.
+/// \tparam Scalar  The element type of the matrix.
+///                 Currently supported types are `float`, `double`, and `long double`.
+/// \tparam OpType  The name of the matrix operation class. Users could either
+///                 use the wrapper classes such as DenseSymMatProd and
+///                 SparseSymMatProd, or define their
+///                 own that implements all the public member functions as in
+///                 DenseSymMatProd.
 ///
 /// Below is an example that demonstrates the usage of this class.
 ///
@@ -76,15 +71,15 @@ namespace Spectra {
 ///     DenseSymMatProd<double> op(M);
 ///
 ///     // Construct eigen solver object, requesting the largest three eigenvalues
-///     SymEigsSolver< double, LARGEST_ALGE, DenseSymMatProd<double> > eigs(&op, 3, 6);
+///     SymEigsSolver<double, DenseSymMatProd<double>> eigs(op, 3, 6);
 ///
 ///     // Initialize and compute
 ///     eigs.init();
-///     int nconv = eigs.compute();
+///     int nconv = eigs.compute(SortRule::LargestAlge);
 ///
 ///     // Retrieve results
 ///     Eigen::VectorXd evalues;
-///     if(eigs.info() == SUCCESSFUL)
+///     if (eigs.info() == CompInfo::Successful)
 ///         evalues = eigs.eigenvalues();
 ///
 ///     std::cout << "Eigenvalues found:\n" << evalues << std::endl;
@@ -109,9 +104,9 @@ namespace Spectra {
 ///     int rows() { return 10; }
 ///     int cols() { return 10; }
 ///     // y_out = M * x_in
-///     void perform_op(double *x_in, double *y_out)
+///     void perform_op(double *x_in, double *y_out) const
 ///     {
-///         for(int i = 0; i < rows(); i++)
+///         for (int i = 0; i < rows(); i++)
 ///         {
 ///             y_out[i] = x_in[i] * (i + 1);
 ///         }
@@ -121,10 +116,10 @@ namespace Spectra {
 /// int main()
 /// {
 ///     MyDiagonalTen op;
-///     SymEigsSolver<double, LARGEST_ALGE, MyDiagonalTen> eigs(&op, 3, 6);
+///     SymEigsSolver<double, MyDiagonalTen> eigs(op, 3, 6);
 ///     eigs.init();
-///     eigs.compute();
-///     if(eigs.info() == SUCCESSFUL)
+///     eigs.compute(SortRule::LargestAlge);
+///     if (eigs.info() == CompInfo::Successful)
 ///     {
 ///         Eigen::VectorXd evalues = eigs.eigenvalues();
 ///         // Will get (10, 9, 8)
@@ -136,18 +131,17 @@ namespace Spectra {
 /// \endcode
 ///
 template <typename Scalar = double,
-          int SelectionRule = LARGEST_MAGN,
-          typename OpType = DenseSymMatProd<double> >
-class SymEigsSolver : public SymEigsBase<Scalar, SelectionRule, OpType, IdentityBOp>
+          typename OpType = DenseSymMatProd<double>>
+class SymEigsSolver : public SymEigsBase<Scalar, OpType, IdentityBOp>
 {
 private:
-    typedef Eigen::Index Index;
+    using Index = Eigen::Index;
 
 public:
     ///
     /// Constructor to create a solver object.
     ///
-    /// \param op   Pointer to the matrix operation object, which should implement
+    /// \param op   The matrix operation object that implements
     ///             the matrix-vector multiplication operation of \f$A\f$:
     ///             calculating \f$Av\f$ for any vector \f$v\f$. Users could either
     ///             create the object from the wrapper class such as DenseSymMatProd, or
@@ -161,11 +155,11 @@ public:
     ///             in each iteration. This parameter must satisfy \f$nev < ncv \le n\f$,
     ///             and is advised to take \f$ncv \ge 2\cdot nev\f$.
     ///
-    SymEigsSolver(OpType* op, Index nev, Index ncv) :
-        SymEigsBase<Scalar, SelectionRule, OpType, IdentityBOp>(op, NULL, nev, ncv)
+    SymEigsSolver(OpType& op, Index nev, Index ncv) :
+        SymEigsBase<Scalar, OpType, IdentityBOp>(op, IdentityBOp(), nev, ncv)
     {}
 };
 
 }  // namespace Spectra
 
-#endif  // SYM_EIGS_SOLVER_H
+#endif  // SPECTRA_SYM_EIGS_SOLVER_H

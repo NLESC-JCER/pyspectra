@@ -1,6 +1,33 @@
+[![Build Status](https://github.com/NLESC-JCER/pyspectra/workflows/build/badge.svg)](https://github.com/NLESC-JCER/pyspectra/actions)
+
 # PySpectra
 
 Python interface to the C++ Spectra library
+
+## Example
+Eigenpairs of a symmetric dense matrix
+```python
+import numpy as np
+from pyspectra import spectra_dense_interface 
+
+# eigenpairs to compute
+nvalues = 2
+
+# size of the search space
+search_space = nvalues * 3
+
+# Compute the highest eigenvalues
+selection_rule = "LargestAlge"
+
+# Create symmetric matrix
+xs = np.random.normal(size=100).reshape(10,10)
+mat = xs + xs.T
+
+# Compute the eigenpairs
+eigenvalues, eigenvectors = spectra_dense_interface.symetric_eigensolver(mat, nvalues, search_space, selection_rule)
+```
+Check the [available selection rules](https://github.com/yixuan/spectra/blob/master/include/Spectra/Util/SelectionRule.h)
+
 
 ## Installation
 To install pyspectra, do:
@@ -13,7 +40,7 @@ To install pyspectra, do:
 Run tests (including coverage) with:
 
 ```bash
-  python setup.py test
+  pytest tests
 ```
 
 ## Contributing
