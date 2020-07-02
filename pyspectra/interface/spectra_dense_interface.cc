@@ -18,7 +18,9 @@
 #include <Eigen/Dense>
 
 #include <Spectra/SymEigsSolver.h>
+#include <Spectra/SymEigsShiftSolver.h>
 #include <Spectra/MatOp/DenseSymMatProd.h>
+#include <Spectra/MatOp/DenseSymShiftSolve.h>
 
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
@@ -46,14 +48,10 @@ Spectra::SortRule string_to_sortrule(const std::string& name)
     return rules.at(name);
 }
 
-std::pair<Vector, Matrix> symeigssolver(const Matrix& mat, Index nvalues, Index nvectors, const std::string& selection)
+/// \brief Run the computation and throw and error if it fails
+template <typename Solver>
+std::pair<Vector, Matrix> compute_and_check(Solver& eigs, const std::string& selection)
 {
-    // Construct matrix operation object using the wrapper class DenseSymMatProd
-    Spectra::DenseSymMatProd<double> op(mat);
-
-    // Construct eigen solver object, requesting the largest three eigenvalues
-    Spectra::SymEigsSolver<double, Spectra::DenseSymMatProd<double>> eigs(op, nvalues, nvectors);
-
     // Initialize and compute
     eigs.init();
     // Compute using the user provided selection rule
@@ -70,10 +68,32 @@ std::pair<Vector, Matrix> symeigssolver(const Matrix& mat, Index nvalues, Index 
     }
 }
 
+/// \brief Call the Spectra::DenseSymMatProd eigensolver
+std::pair<Vector, Matrix> symeigssolver(const Matrix& mat, Index nvalues, Index nvectors, const std::string& selection)
+{
+    // Construct matrix operation object using the wrapper class DenseSymMatProd
+    Spectra::DenseSymMatProd<double> op(mat);
+    Spectra::SymEigsSolver<double, Spectra::DenseSymMatProd<double>> eigs(op, nvalues, nvectors);
+
+    return compute_and_check(eigs, selection);
+}
+
+/// \brief Call the Spectra::SymEigsShiftSolver eigensolver
+std::pair<Vector, Matrix> symeigsshiftsolver(const Matrix& mat, Index nvalues, Index nvectors, double sigma, const std::string& selection)
+{
+    // Construct matrix operation object using the wrapper class DenseSymMatProd
+    Spectra::DenseSymShiftSolve<double> op(mat);
+    Spectra::SymEigsShiftSolver<double, Spectra::DenseSymShiftSolve<double>> eigs(op, nvalues, nvectors, sigma);
+
+    return compute_and_check(eigs, selection);
+}
+
 PYBIND11_MODULE(spectra_dense_interface, m)
 {
     m.doc() = "Interface to the C++ spectra library, see: "
               "https://github.com/yixuan/spectra";
 
     m.def("symmetric_eigensolver", &symeigssolver, py::return_value_policy::reference_internal);
+
+    m.def("symmetric_shift_eigensolver", &symeigsshiftsolver, py::return_value_policy::reference_internal);
 }
