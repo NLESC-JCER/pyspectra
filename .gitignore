@@ -85,3 +85,6 @@ scripts/.DS_Store
 
 # Spyder
 .spyproject/
+
+# compilation
+tmp

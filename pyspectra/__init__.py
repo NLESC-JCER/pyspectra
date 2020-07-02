@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Documentation about pyspectra"""
 import logging
 
