@@ -57,8 +57,7 @@ std::pair<Vector, Matrix> symeigssolver(const Matrix& mat, Index nvalues, Index 
     // Initialize and compute
     eigs.init();
     // Compute using the user provided selection rule
-    eigs.compute(Spectra::SortRule::LargestAlge);
-    // eigs.compute(string_to_sortrule(selection));
+    eigs.compute(string_to_sortrule(selection));
 
     // Retrieve results
     if (eigs.info() == Spectra::CompInfo::Successful)

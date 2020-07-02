@@ -20,13 +20,20 @@ def test_dense_symmetric():
     search_space = pairs * 5
 
     # create symmetric matrix
-    xs = np.random.normal(size=10000).reshape(size, size)
+    xs = np.random.normal(size=size ** 2).reshape(size, size)
     mat = xs + xs.T
 
-    selection = "LargestAlge"
+    # These are the only supported rules
+    selection_rules = ("LargestMagn",
+                       "LargestAlge",
+                       "SmallestAlge",
+                       "BothEnds"
+                       )
 
-    es, cs = spectra_dense_interface.symmetric_eigensolver(
-        mat, pairs, search_space, selection)
-    for i, value in enumerate(es):
-        residue = np.dot(mat, cs[:, i]) - value * cs[:, i]
-        assert norm(residue) < 1e-8
+    for selection in selection_rules:
+        print(f"testing selection rule:{selection}")
+        es, cs = spectra_dense_interface.symmetric_eigensolver(
+            mat, pairs, search_space, selection)
+        for i, value in enumerate(es):
+            residue = np.dot(mat, cs[:, i]) - value * cs[:, i]
+            assert norm(residue) < 1e-8
