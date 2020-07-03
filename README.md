@@ -25,7 +25,8 @@ The following functions are available in the [spectra_dense_interface](https://g
   ```
 * ```py
   general_complex_shift_eigensolver(
-    mat: np.ndarray, eigenpairs: int, basis_size: int, shift_real: float, shift_imag: float, selection_rule: str)
+    mat: np.ndarray, eigenpairs: int, basis_size: int,
+    shift_real: float, shift_imag: float, selection_rule: str)
     -> (np.ndarray, np.ndarray)
   ```
 * ```py

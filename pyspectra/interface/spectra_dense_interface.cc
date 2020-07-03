@@ -51,7 +51,22 @@ Spectra::SortRule string_to_sortrule(const std::string& name)
         {"SmallestImag", Spectra::SortRule::SmallestImag},
         {"SmallestAlge", Spectra::SortRule::SmallestAlge},
         {"BothEnds", Spectra::SortRule::BothEnds}};
-    return rules.at(name);
+    auto it = rules.find(name);
+    if (it != rules.cend())
+    {
+        return it->second;
+    }
+    else
+    {
+        std::ostringstream oss;
+        oss << "There is no selection rule named: " << name << "\n"
+            << "Available selection rules:\n";
+        for (const auto& pair : rules)
+        {
+            oss << pair.first << "\n";
+        }
+        throw std::runtime_error(oss.str());
+    }
 }
 
 /// \brief Run the computation and throw and error if it fails
