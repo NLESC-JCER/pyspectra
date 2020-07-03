@@ -4,76 +4,27 @@
 
 Python interface to the [C++ Spectra library](https://github.com/yixuan/spectra)
 
-## API
-
-### Dense interface
-To call the dense interface you need to import the following module:
-```python
-import numpy as np
-from pyspectra import spectra_dense_interface
-```
-The following functions are available in the [spectra_dense_interface](https://github.com/NLESC-JCER/pyspectra/blob/master/pyspectra/interface/spectra_dense_interface.cc):
-* ```py
-  general_eigensolver(
-    mat: np.ndarray, eigenpairs: int, basis_size: int, selection_rule: str)
-    -> (np.ndarray, np.ndarray)
-  ```
-* ```py
-  general_real_shift_eigensolver(
-    mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str)
-    -> (np.ndarray, np.ndarray)
-  ```
-* ```py
-  general_complex_shift_eigensolver(
-    mat: np.ndarray, eigenpairs: int, basis_size: int,
-    shift_real: float, shift_imag: float, selection_rule: str)
-    -> (np.ndarray, np.ndarray)
-  ```
-* ```py
-  symmetric_eigensolver(
-    mat: np.ndarray, eigenpairs: int, basis_size: int, selection_rule: str)
-    -> (np.ndarray, np.ndarray)
-  ```
-* ```py
-  symmetric_shift_eigensolver(
-    mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str)
-    -> (np.ndarray, np.ndarray)
-  ```
-* ```py
-  symmetric_generalized_shift_eigensolver(
-    mat_A: np.ndarray, mat_B, eigenpairs: int, basis_size: int, shift: float,
-    selection_rule: str)
-    -> (np.ndarray, np.ndarray)
-  ```
-
-**All functions return a tuple whith the resulting eigenvalues and eigenvectors.**
-
-**Note**:
-  Check the [available selection rules](https://github.com/NLESC-JCER/pyspectra/blob/master/include/Spectra/Util/SelectionRule.h)
-
-
 ## Example
 Eigenpairs of a symmetric dense matrix
 ```py
 import numpy as np
 from pyspectra import spectra_dense_interface 
 
-# eigenpairs to compute
-nvalues = 2
+size = 100
 
-# size of the search space
-search_space = nvalues * 3
-
-# Compute the highest eigenvalues
-selection_rule = "LargestAlge"
+# Create random matrix
+xs = np.random.normal(size=size ** 2).reshape(size, size)
 
 # Create symmetric matrix
-xs = np.random.normal(size=100).reshape(10,10)
 mat = xs + xs.T
 
 # Compute the eigenpairs
-eigenvalues, eigenvectors = spectra_dense_interface.symetric_eigensolver(mat, nvalues, search_space, selection_rule)
+eigenvalues, eigenvectors = eigensolverh(xs)
+symm_eigenvalues, symm_eigenvectors = eigensolverh(mat)
 ```
+**Note**:
+  Check the [available selection rules](https://github.com/NLESC-JCER/pyspectra/blob/master/include/Spectra/Util/SelectionRule.h)
+
 
 ## Installation
 To install pyspectra, do:
