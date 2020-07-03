@@ -19,6 +19,29 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 
+def search_eigen(hint: str = '/usr/include/eigen3'):
+    """Search for the eigen3 library.
+
+    see: http://eigen.tuxfamily.org/index.php?title=Main_Page#Documentation
+    """
+    if os.path.exists(hint):
+        return hint
+    else:
+        return ""
+
+
+def search_conda():
+    """Search for a conda virtual environment."""
+    conda_prefix = os.environ["CONDA_PREFIX"]
+    if conda_prefix is not None:
+        conda_include = join(conda_prefix, 'include')
+        conda_lib = join(conda_prefix, 'lib')
+    else:
+        conda_include = ""
+        conda_lib = ""
+    return conda_include, conda_lib
+
+
 class get_pybind_include:
     """Helper class to determine the pybind11 include path.
 
@@ -104,15 +127,20 @@ class BuildExt(build_ext):
         build_ext.build_extensions(self)
 
 
+conda_include, conda_lib = search_conda()
+eigen_path = search_eigen()
+
 ext_pybind = Extension(
     'spectra_dense_interface',
     sources=['pyspectra/interface/spectra_dense_interface.cc'],
     include_dirs=[
         'include',
+        conda_include,
+        eigen_path,
         get_pybind_include(),
-        get_pybind_include(user=True),
-        '/usr/include/eigen3'
+        get_pybind_include(user=True)
     ],
+    library_dirs=[conda_lib],
     language='c++')
 
 
@@ -150,13 +178,8 @@ setup(
                 'sphinx-autodoc-typehints',
                 'sphinx_rtd_theme'
                 ],
-        'test': ['mypy',
-                 'pytest>=5.4',
-                 'pytest-cov',
-                 'pytest-mock',
-                 'pytest-pycodestyle',
-                 'pytest-pydocstyle>=2.1',
-                 'typing_extensions'
+        'test': ['pytest>=5.4',
+                 'pytest-cov'
                  ],
     }
 )
