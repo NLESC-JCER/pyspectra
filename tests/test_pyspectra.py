@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Tests for the pyspectra module."""
 import numpy as np
+import pytest
 
 from pyspectra import spectra_dense_interface
 from typing import Callable, List, Tuple, TypeVar
@@ -12,8 +13,9 @@ SIZE = 100  # Matrix size
 PAIRS = 2  # number of eigenpairs
 SEARCH_SPACE = PAIRS * 5
 SIGMA = 1.0
-SIGMAR = 2.0 # Real shift
-SIGMAI = 1.0 # Imag shift
+SIGMAR = 2.0  # Real shift
+SIGMAI = 1.0  # Imag shift
+
 
 def norm(vs: np.array) -> float:
     """Compute the norm of a vector."""
@@ -63,6 +65,7 @@ def test_dense_general():
     run_test(spectra_dense_interface.general_eigensolver,
              args, selection_rules)
 
+
 def test_dense_real_shift_general():
     """Test the interface to Spectra::GenEigsRealShiftSolver."""
     mat = create_symmetic_matrix(SIZE)
@@ -79,6 +82,7 @@ def test_dense_real_shift_general():
     run_test(spectra_dense_interface.general_real_shift_eigensolver,
              args, selection_rules)
 
+
 def test_dense_real_shift_general():
     """Test the interface to Spectra::GenEigsComplexShiftSolver."""
     mat = create_symmetic_matrix(SIZE)
@@ -94,7 +98,6 @@ def test_dense_real_shift_general():
     args = (mat, PAIRS, SEARCH_SPACE, SIGMAR, SIGMAI)
     run_test(spectra_dense_interface.general_complex_shift_eigensolver,
              args, selection_rules)
-
 
 
 def test_dense_symmetric():
@@ -128,3 +131,14 @@ def test_dense_symmetric_shift():
     args = (mat, PAIRS, SEARCH_SPACE, SIGMA)
     run_test(spectra_dense_interface.symmetric_shift_eigensolver,
              args, selection_rules)
+
+
+def test_unknown_selection_rule():
+    """Check that an error is raise if a selection rule is unknown."""
+    mat = create_symmetic_matrix(SIZE)
+    selection_rules = ("something")
+
+    args = (mat, PAIRS, SEARCH_SPACE)
+    with pytest.raises(RuntimeError):
+        run_test(spectra_dense_interface.symmetric_eigensolver,
+                 args, selection_rules)
