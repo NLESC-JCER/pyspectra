@@ -5,6 +5,7 @@ import pytest
 
 from pyspectra import spectra_dense_interface
 from typing import Callable, List, Tuple, TypeVar
+from scipy import linalg
 
 T = TypeVar('T')
 
@@ -35,13 +36,16 @@ def create_symmetic_matrix(size: int) -> np.array:
 
 def run_test(
         function: Callable[[T], np.array], args: List[T], selection_rules: Tuple[str],
-        is_symmetric: bool = True) -> None:
+        is_symmetric: bool = True, is_generalized: bool = False) -> None:
     """Call ``function`` with ``args``."""
     for selection in selection_rules:
         print(f"testing selection rule:{selection}")
         es, cs = function(*args, selection)
         fun_numpy = np.linalg.eigh if is_symmetric else np.linalg.eig
-        es_np, _cs_np = fun_numpy(args[0])
+        if is_generalized:
+            es_np, _cs_np = fun_numpy(args[0], args[1])
+        else:
+            es_np, _cs_np = fun_numpy(args[0])
         print(f"Expected eigenvalues:{es}")
         print(f"Computed eigenvalues:{es_np}")
         for i, value in enumerate(es):
@@ -63,7 +67,7 @@ def test_dense_general():
 
     args = (mat, PAIRS, SEARCH_SPACE)
     run_test(spectra_dense_interface.general_eigensolver,
-             args, selection_rules)
+             args, selection_rules, is_symmetric=False)
 
 
 def test_dense_real_shift_general():
@@ -83,7 +87,7 @@ def test_dense_real_shift_general():
              args, selection_rules)
 
 
-def test_dense_real_shift_general():
+def test_dense_complex_shift_general():
     """Test the interface to Spectra::GenEigsComplexShiftSolver."""
     mat = create_symmetic_matrix(SIZE)
 
@@ -131,6 +135,24 @@ def test_dense_symmetric_shift():
     args = (mat, PAIRS, SEARCH_SPACE, SIGMA)
     run_test(spectra_dense_interface.symmetric_shift_eigensolver,
              args, selection_rules)
+
+
+# def test_dense_symmetric_generalized_shift():
+#     """Test the interface to Spectra::SymEigsShiftSolver."""
+#     # Eigenpairs to compute
+#     mat_A = create_symmetic_matrix(SIZE)
+#     mat_B = np.diag(np.abs(np.random.normal(size=SIZE)))
+
+#     # These are the only supported rules
+#     selection_rules = ("LargestMagn",
+#                        "LargestAlge",
+#                        "SmallestAlge",
+#                        "BothEnds"
+#                        )
+
+#     args = (mat_A, mat_B, PAIRS, SEARCH_SPACE, SIGMA)
+#     run_test(spectra_dense_interface.symmetric_generalized_shift_eigensolver,
+#              args, selection_rules)
 
 
 def test_unknown_selection_rule():

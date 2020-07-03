@@ -39,6 +39,12 @@ The following functions are available in the [spectra_dense_interface](https://g
     mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str)
     -> (np.ndarray, np.ndarray)
   ```
+* ```py
+  symmetric_generalized_shift_eigensolver(
+    mat_A: np.ndarray, mat_B, eigenpairs: int, basis_size: int, shift: float,
+    selection_rule: str)
+    -> (np.ndarray, np.ndarray)
+  ```
 
 **All functions return a tuple whith the resulting eigenvalues and eigenvectors.**
 

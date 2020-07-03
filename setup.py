@@ -173,7 +173,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    install_requires=['numpy', "pybind11"],
+    install_requires=['numpy', "pybind11", "scipy"],
     cmdclass={'build_ext': BuildExt},
     ext_modules=[ext_pybind],
     extras_require={
