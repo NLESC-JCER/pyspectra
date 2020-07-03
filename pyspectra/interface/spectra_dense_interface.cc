@@ -17,10 +17,12 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
+#include <Spectra/GenEigsComplexShiftSolver.h>
 #include <Spectra/GenEigsSolver.h>
 #include <Spectra/GenEigsRealShiftSolver.h>
 #include <Spectra/SymEigsSolver.h>
 #include <Spectra/SymEigsShiftSolver.h>
+#include <Spectra/MatOp/DenseGenComplexShiftSolve.h>
 #include <Spectra/MatOp/DenseGenMatProd.h>
 #include <Spectra/MatOp/DenseGenRealShiftSolve.h>
 #include <Spectra/MatOp/DenseSymMatProd.h>
@@ -73,7 +75,8 @@ std::pair<ResultVector, ResultMatrix> compute_and_check(Solver& eigs, const std:
 }
 
 /// \brief Call the Spectra::GenEigsSolver eigensolver
-std::pair<ComplexVector, ComplexMatrix> geneigssolver(const Matrix& mat, Index nvalues, Index nvectors, const std::string& selection)
+std::pair<ComplexVector, ComplexMatrix> geneigssolver(
+    const Matrix& mat, Index nvalues, Index nvectors, const std::string& selection)
 {
     using DenseOp = Spectra::DenseGenMatProd<double>;
 
@@ -84,7 +87,8 @@ std::pair<ComplexVector, ComplexMatrix> geneigssolver(const Matrix& mat, Index n
 }
 
 /// \brief Call the Spectra::GenEigsRealShiftSolver eigensolver
-std::pair<ComplexVector, ComplexMatrix> geneigsrealshiftsolver(const Matrix& mat, Index nvalues, Index nvectors, double sigma, const std::string& selection)
+std::pair<ComplexVector, ComplexMatrix> geneigsrealshiftsolver(
+    const Matrix& mat, Index nvalues, Index nvectors, double sigma, const std::string& selection)
 {
     using DenseOp = Spectra::DenseGenRealShiftSolve<double>;
     DenseOp op(mat);
@@ -92,8 +96,19 @@ std::pair<ComplexVector, ComplexMatrix> geneigsrealshiftsolver(const Matrix& mat
     return compute_and_check<ComplexVector, ComplexMatrix>(eigs, selection);
 }
 
+/// \brief Call the Spectra::GenEigsComplexShiftSolver eigensolver
+std::pair<ComplexVector, ComplexMatrix> geneigscomplexshiftsolver(
+    const Matrix& mat, Index nvalues, Index nvectors, double sigmar, double sigmai, const std::string& selection)
+{
+    using DenseOp = Spectra::DenseGenComplexShiftSolve<double>;
+    DenseOp op(mat);
+    Spectra::GenEigsComplexShiftSolver<double, DenseOp> eigs(op, nvalues, nvectors, sigmar, sigmai);
+    return compute_and_check<ComplexVector, ComplexMatrix>(eigs, selection);
+}
+
 /// \brief Call the Spectra::DenseSymMatProd eigensolver
-std::pair<Vector, Matrix> symeigssolver(const Matrix& mat, Index nvalues, Index nvectors, const std::string& selection)
+std::pair<Vector, Matrix> symeigssolver(
+    const Matrix& mat, Index nvalues, Index nvectors, const std::string& selection)
 {
     using DenseSym = Spectra::DenseSymMatProd<double>;
     // Construct matrix operation object using the wrapper class DenseSymMatProd
@@ -104,7 +119,8 @@ std::pair<Vector, Matrix> symeigssolver(const Matrix& mat, Index nvalues, Index 
 }
 
 /// \brief Call the Spectra::SymEigsShiftSolver eigensolver
-std::pair<Vector, Matrix> symeigsshiftsolver(const Matrix& mat, Index nvalues, Index nvectors, double sigma, const std::string& selection)
+std::pair<Vector, Matrix> symeigsshiftsolver(
+    const Matrix& mat, Index nvalues, Index nvectors, double sigma, const std::string& selection)
 {
     using DenseSymShift = Spectra::DenseSymShiftSolve<double>;
     // Construct matrix operation object using the wrapper class DenseSymMatProd
@@ -122,6 +138,8 @@ PYBIND11_MODULE(spectra_dense_interface, m)
     m.def("general_eigensolver", &geneigssolver, py::return_value_policy::reference_internal);
 
     m.def("general_real_shift_eigensolver", &geneigsrealshiftsolver, py::return_value_policy::reference_internal);
+
+    m.def("general_complex_shift_eigensolver", &geneigscomplexshiftsolver, py::return_value_policy::reference_internal);
 
     m.def("symmetric_eigensolver", &symeigssolver, py::return_value_policy::reference_internal);
 

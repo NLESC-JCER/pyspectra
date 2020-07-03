@@ -14,16 +14,29 @@ from pyspectra import spectra_dense_interface
 ```
 The following functions are available in the [spectra_dense_interface](https://github.com/NLESC-JCER/pyspectra/blob/master/pyspectra/interface/spectra_dense_interface.cc):
 * ```py
-  general_eigensolver(mat: np.ndarray, eigenpairs: int, basis_size: int, selection_rule: str) -> (np.ndarray, np.ndarray)
+  general_eigensolver(
+    mat: np.ndarray, eigenpairs: int, basis_size: int, selection_rule: str)
+    -> (np.ndarray, np.ndarray)
   ```
 * ```py
-  general_real_shift_eigensolver(mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str) -> np.ndarray
+  general_real_shift_eigensolver(
+    mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str)
+    -> (np.ndarray, np.ndarray)
   ```
 * ```py
-  symmetric_eigensolver(mat: np.ndarray, eigenpairs: int, basis_size: int, selection_rule: str) -> np.ndarray
+  general_complex_shift_eigensolver(
+    mat: np.ndarray, eigenpairs: int, basis_size: int, shift_real: float, shift_imag: float, selection_rule: str)
+    -> (np.ndarray, np.ndarray)
   ```
 * ```py
-  symmetric_shift_eigensolver(mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str) -> np.ndarray
+  symmetric_eigensolver(
+    mat: np.ndarray, eigenpairs: int, basis_size: int, selection_rule: str)
+    -> (np.ndarray, np.ndarray)
+  ```
+* ```py
+  symmetric_shift_eigensolver(
+    mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str)
+    -> (np.ndarray, np.ndarray)
   ```
 
 **All functions return a tuple whith the resulting eigenvalues and eigenvectors.**
