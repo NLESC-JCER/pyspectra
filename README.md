@@ -9,15 +9,32 @@ Python interface to the [C++ Spectra library](https://github.com/yixuan/spectra)
 ### Dense interface
 To call the dense interface you need to import the following module:
 ```python
+import numpy as np
 from pyspectra import spectra_dense_interface
 ```
-* ``spectra_dense_interface.symmetric_eigensolver``
-* ``spectra_dense_interface.symmetric_shift_eigensolver``
+The following functions are available in the [spectra_dense_interface](https://github.com/NLESC-JCER/pyspectra/blob/master/pyspectra/interface/spectra_dense_interface.cc):
+* ```py
+  general_eigensolver(mat: np.ndarray, eigenpairs: int, basis_size: int, selection_rule: str) -> (np.ndarray, np.ndarray)
+  ```
+* ```py
+  general_real_shift_eigensolver(mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str) -> np.ndarray
+  ```
+* ```py
+  symmetric_eigensolver(mat: np.ndarray, eigenpairs: int, basis_size: int, selection_rule: str) -> np.ndarray
+  ```
+* ```py
+  symmetric_shift_eigensolver(mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str) -> np.ndarray
+  ```
+
+**All functions return a tuple whith the resulting eigenvalues and eigenvectors.**
+
+**Note**:
+  Check the [available selection rules](https://github.com/NLESC-JCER/pyspectra/blob/master/include/Spectra/Util/SelectionRule.h)
 
 
 ## Example
 Eigenpairs of a symmetric dense matrix
-```python
+```py
 import numpy as np
 from pyspectra import spectra_dense_interface 
 
@@ -37,8 +54,6 @@ mat = xs + xs.T
 # Compute the eigenpairs
 eigenvalues, eigenvectors = spectra_dense_interface.symetric_eigensolver(mat, nvalues, search_space, selection_rule)
 ```
-Check the [available selection rules](https://github.com/yixuan/spectra/blob/master/include/Spectra/Util/SelectionRule.h)
-
 
 ## Installation
 To install pyspectra, do:

@@ -2,7 +2,10 @@
 import logging
 
 import spectra_dense_interface
-from spectra_dense_interface import symmetric_eigensolver
+from spectra_dense_interface import (general_eigensolver,
+                                     general_real_shift_eigensolver,
+                                     symmetric_eigensolver,
+                                     symmetric_shift_eigensolver)
 
 from .__version__ import __version__
 
@@ -12,4 +15,6 @@ __author__ = "Netherlands eScience Center"
 __email__ = 'f.zapata@esciencecenter.nl'
 
 
-__all__ = ["spectra_dense_interface", "symmetric_eigensolver"]
+__all__ = ["general_eigensolver", "general_real_shift_eigensolver",
+           "spectra_dense_interface",
+           "symmetric_eigensolver", "symmetric_shift_eigensolver"]
