@@ -130,17 +130,21 @@ class BuildExt(build_ext):
 conda_include, conda_lib = search_conda()
 eigen_path = search_eigen()
 
+include_dirs = (
+    'include',
+    conda_include,
+    eigen_path,
+    get_pybind_include(),
+    get_pybind_include(user=True)
+)
+
+library_dirs = [conda_lib]
+
 ext_pybind = Extension(
     'spectra_dense_interface',
     sources=['pyspectra/interface/spectra_dense_interface.cc'],
-    include_dirs=[
-        'include',
-        conda_include,
-        eigen_path,
-        get_pybind_include(),
-        get_pybind_include(user=True)
-    ],
-    library_dirs=[conda_lib],
+    include_dirs=list(filter(lambda x: x, include_dirs)),
+    library_dirs=list(filter(lambda x: x, library_dirs)),
     language='c++')
 
 
