@@ -2,7 +2,18 @@
 
 # PySpectra
 
-Python interface to the C++ Spectra library
+Python interface to the [C++ Spectra library](https://github.com/yixuan/spectra)
+
+## API
+
+### Dense interface
+To call the dense interface you need to import the following module:
+```python
+from pyspectra import spectra_dense_interface
+```
+* ``spectra_dense_interface.symmetric_eigensolver``
+* ``spectra_dense_interface.symmetric_shift_eigensolver``
+
 
 ## Example
 Eigenpairs of a symmetric dense matrix

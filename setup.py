@@ -32,7 +32,7 @@ def search_eigen(hint: str = '/usr/include/eigen3'):
 
 def search_conda():
     """Search for a conda virtual environment."""
-    conda_prefix = os.environ["CONDA_PREFIX"]
+    conda_prefix = os.environ.get("CONDA_PREFIX")
     if conda_prefix is not None:
         conda_include = join(conda_prefix, 'include')
         conda_lib = join(conda_prefix, 'lib')
