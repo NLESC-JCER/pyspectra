@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/NLESC-JCER/pyspectra/workflows/build/badge.svg)](https://github.com/NLESC-  JCER/pyspectra/actions)
+[![Build Status](https://github.com/NLESC-JCER/pyspectra/workflows/build/badge.svg)](https://github.com/NLESC-JCER/pyspectra/actions)
 
 # PySpectra
 
