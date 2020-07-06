@@ -1,4 +1,5 @@
 [![Build Status](https://github.com/NLESC-JCER/pyspectra/workflows/build/badge.svg)](https://github.com/NLESC-JCER/pyspectra/actions)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/f148ea21e3ac42698a0473a587c9e88c)](https://www.codacy.com/gh/NLESC-JCER/pyspectra?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=NLESC-JCER/pyspectra&amp;utm_campaign=Badge_Coverage)
 
 # PySpectra
 
