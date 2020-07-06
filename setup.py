@@ -153,6 +153,7 @@ setup(
     version=version['__version__'],
     description="Python interface to the C++ Spectra library",
     long_description=readme + '\n\n',
+    long_description_content_type='text/markdown',
     author="Netherlands eScience Center",
     author_email='f.zapata@esciencecenter.nl',
     url='https://github.com//pyspectra',
