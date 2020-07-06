@@ -1,3 +1,10 @@
+# 0.2.0
+
+## Change
+* Added more tests
+* Made `selection_rule` optional for **eigensolverh**
+* Improved code style.
+
 # 0.1.0
 
 ## Added
