@@ -41,15 +41,15 @@ symm_eigenvalues, symm_eigenvectors = eigensolverh(
 **Note**:
 
   The [available selection_rules](https://github.com/NLESC-JCER/pyspectra/blob/master/include/Spectra/Util/SelectionRule.h) to compute a portion of the spectrum are:
-  * LargestMagn
-  * LargestReal
-  * LargestImag
-  * LargestAlge
-  * SmallestMagn
-  * SmallestReal
-  * SmallestImag
-  * SmallestAlge
-  * BothEnds
+  *  LargestMagn
+  *  LargestReal
+  *  LargestImag
+  *  LargestAlge
+  *  SmallestMagn
+  *  SmallestReal
+  *  SmallestImag
+  *  SmallestAlge
+  *  BothEnds
 
 ## Eigensolvers Dense Interface
 You can also call directly the dense interface. You would need
@@ -59,38 +59,38 @@ import numpy as np
 from pyspectra import spectra_dense_interface
 ```
 The following functions are available in the [spectra_dense_interface](https://github.com/NLESC-JCER/pyspectra/blob/master/pyspectra/interface/spectra_dense_interface.cc):
-* ```py
-  general_eigensolver(
-    mat: np.ndarray, eigenpairs: int, basis_size: int, selection_rule: str)
-    > (np.ndarray, np.ndarray)
-  ```
-* ```py
-  general_real_shift_eigensolver(
-    mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str)
-    -> (np.ndarray, np.ndarray)
-  ```
-* ```py
-  general_complex_shift_eigensolver(
-    mat: np.ndarray, eigenpairs: int, basis_size: int,
-    shift_real: float, shift_imag: float, selection_rule: str)
-    -> (np.ndarray, np.ndarray)
-  ```
-* ```py
-  symmetric_eigensolver(
+*  ```py
+   general_eigensolver(
     mat: np.ndarray, eigenpairs: int, basis_size: int, selection_rule: str)
     -> (np.ndarray, np.ndarray)
-  ```
-* ```py
-  symmetric_shift_eigensolver(
-    mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str)
-    -> (np.ndarray, np.ndarray)
-  ```
-* ```py
-  symmetric_generalized_shift_eigensolver(
-    mat_A: np.ndarray, mat_B, eigenpairs: int, basis_size: int, shift: float,
-    selection_rule: str)
-    -> (np.ndarray, np.ndarray)
-  ```
+   ```
+*  ```py
+   general_real_shift_eigensolver(
+   mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str)
+   -> (np.ndarray, np.ndarray)
+   ```
+*  ```py
+   general_complex_shift_eigensolver(
+     mat: np.ndarray, eigenpairs: int, basis_size: int,
+     shift_real: float, shift_imag: float, selection_rule: str)
+     -> (np.ndarray, np.ndarray)
+   ```
+*  ```py
+   symmetric_eigensolver(
+     mat: np.ndarray, eigenpairs: int, basis_size: int, selection_rule: str)
+     -> (np.ndarray, np.ndarray)
+   ```
+*  ```py
+   symmetric_shift_eigensolver(
+     mat: np.ndarray, eigenpairs: int, basis_size: int, shift: float, selection_rule: str)
+     -> (np.ndarray, np.ndarray)
+   ```
+*  ```py
+   symmetric_generalized_shift_eigensolver(
+     mat_A: np.ndarray, mat_B, eigenpairs: int, basis_size: int, shift: float,
+     selection_rule: str)
+     -> (np.ndarray, np.ndarray)
+   ```
 
 ### Example
 Eigenpairs of a symmetric dense matrix using shift
