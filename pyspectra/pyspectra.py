@@ -5,7 +5,7 @@ API
 .. autofunction:: eigensolver
 .. autofunction:: eigensolverh
 """
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 
@@ -38,7 +38,7 @@ def check_and_sanitize(
     if selection_rule is None:
         selection_rule = "LargestMagn"
     if search_space is None:
-        search_space = nvalues * 2
+        search_space = nvalues * 5
 
     if shift is not None:
         if not any(isinstance(shift, x) for x in (np.float, np.complex)):
@@ -84,19 +84,21 @@ def eigensolver(
         mat, nvalues, selection_rule, search_space, shift)
 
     if shift is None:
-        return spectra_dense_interface.general_eigensolver(mat, nvalues, search_space, selection_rule)
+        return spectra_dense_interface.general_eigensolver(
+            mat, nvalues, search_space, selection_rule)
     if isinstance(shift, np.float):
-        return spectra_dense_interface.general_real_shift_eigensolver(mat, nvalues, search_space, shift, selection_rule)
+        return spectra_dense_interface.general_real_shift_eigensolver(
+            mat, nvalues, search_space, shift, selection_rule)
     else:
-        return spectra_dense_interface.general_complex_shift_eigensolver(mat, nvalues, search_space, shift, selection_rule)
+        return spectra_dense_interface.general_complex_shift_eigensolver(
+            mat, nvalues, search_space, shift.real, shift.imag, selection_rule)
 
 
 def eigensolverh(
         mat: np.ndarray, nvalues: int, selection_rule: str,
         search_space: Optional[int] = None, mat_B: np.ndarray = None,
         shift: Optional[Union[np.float, np.complex]] = None) -> (np.ndarray, np.ndarray):
-    """
-    Compute ``nvalues`` eigenvalues for the symmetric matrix ``mat``
+    """Compute ``nvalues`` eigenvalues for the symmetric matrix ``mat``.
 
     Parameters
     ----------
@@ -130,8 +132,11 @@ def eigensolverh(
         mat, nvalues, selection_rule, search_space, shift)
 
     if shift is None:
-        return spectra_dense_interface.symmetric_eigensolver(mat, nvalues, search_space, selection_rule)
+        return spectra_dense_interface.symmetric_eigensolver(
+            mat, nvalues, search_space, selection_rule)
     elif mat_B is None:
-        return spectra_dense_interface.symmetric_shift_eigensolver(mat, nvalues, search_space, shift, selection_rule)
+        return spectra_dense_interface.symmetric_shift_eigensolver(
+            mat, nvalues, search_space, shift, selection_rule)
     else:
-        return spectra_dense_interface.symmetric_generalized_shift_eigensolver(mat, nvalues, search_space, shift, selection_rule)
+        return spectra_dense_interface.symmetric_generalized_shift_eigensolver(
+            mat, mat_B, nvalues, search_space, shift, selection_rule)
