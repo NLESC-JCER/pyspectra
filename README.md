@@ -30,7 +30,7 @@ mat = xs + xs.T
 
 # Compute two eigenpairs selecting the eigenvalues with
 # largest magnitude (default).
-eigenvalues, eigenvectors = eigensolverh(xs, nvalues)
+eigenvalues, eigenvectors = eigensolver(xs, nvalues)
 
 # Compute two eigenpairs selecting the eigenvalues with
 # largest algebraic value
@@ -114,7 +114,7 @@ mat = xs + xs.T
 selection_rule = "LargestAlge"
 symm_eigenvalues, symm_eigenvectors = \
   spectra_dense_interface.symmetric_eigensolver(
-  mat, nvalues, search_space, shift, selection_rule)
+  mat, nvalues, search_space, selection_rule)
 ```
 
 **All functions return a tuple whith the resulting eigenvalues and eigenvectors.**
