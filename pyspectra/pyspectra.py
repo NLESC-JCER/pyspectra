@@ -98,7 +98,7 @@ def eigensolver(
 
 
 def eigensolverh(
-        mat: np.ndarray, nvalues: int, selection_rule: str,
+        mat: np.ndarray, nvalues: int, selection_rule: Optional[str] = None,
         search_space: Optional[int] = None, generalized: np.ndarray = None,
         shift: Optional[Union[np.float, np.complex]] = None) -> EigenPair:
     """Compute ``nvalues`` eigenvalues for the symmetric matrix ``mat``.

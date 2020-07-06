@@ -3,6 +3,7 @@
 from typing import Callable, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
+import pytest
 
 from pyspectra import eigensolver, eigensolverh
 
@@ -85,3 +86,20 @@ def test_eigensolverh():
     print(f"default search space and shift = {SIGMA.real}")
     run_test(eigensolverh, mat, nvalues, rules,
              search_space=None, shift=SIGMA.real)
+
+
+def test_invalid_argument():
+    """Check that an error is raised if the arguments are invalid."""
+    mat = create_symmetic_matrix(SIZE)
+    nvalues = 2
+    print("wrong name for selection rule")
+    with pytest.raises(RuntimeError):
+        eigensolverh(mat, nvalues, selection_rule="Boom")
+
+    print("more eigenpairs requested than columns")
+    with pytest.raises(RuntimeError):
+        eigensolverh(mat, SIZE + 1)
+
+    print("Shift is not an scalar")
+    with pytest.raises(RuntimeError):
+        eigensolverh(mat, nvalues, shift="1.0")
