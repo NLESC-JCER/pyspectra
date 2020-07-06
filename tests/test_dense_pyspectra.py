@@ -47,7 +47,6 @@ def test_dense_general():
                        "LargestReal",
                        "LargestImag",
                        "SmallestReal",
-                       "SmallestImag"
                        )
 
     args = (mat, PAIRS, SEARCH_SPACE)
@@ -64,7 +63,6 @@ def test_dense_real_shift_general():
                        "LargestReal",
                        "LargestImag",
                        "SmallestReal",
-                       "SmallestImag"
                        )
 
     args = (mat, PAIRS, SEARCH_SPACE, SIGMA)
@@ -81,7 +79,6 @@ def test_dense_complex_shift_general():
                        "LargestReal",
                        "LargestImag",
                        "SmallestReal",
-                       "SmallestImag"
                        )
 
     args = (mat, PAIRS, SEARCH_SPACE, SIGMAR, SIGMAI)
