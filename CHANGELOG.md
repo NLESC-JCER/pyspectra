@@ -1,14 +1,6 @@
-###########
-Change Log
-###########
+# 0.1.0
 
-All notable changes to this project will be documented in this file.
-This project adheres to `Semantic Versioning <http://semver.org/>`_.
-
-[Unreleased]
-************
-
-Added
------
-
-* Empty Python project directory structure
+## Added
+* Python dense interface using [Pybind11](https://github.com/pybind/pybind11)
+* Wrapper function **eigensolver** and **eigensolveh**
+* Test for the dense interface and the wrappers
