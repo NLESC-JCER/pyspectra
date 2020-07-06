@@ -28,9 +28,15 @@ xs = np.random.normal(size=size ** 2).reshape(size, size)
 # Create symmetric matrix
 mat = xs + xs.T
 
-# Compute two eigenpairs
+# Compute two eigenpairs selecting the eigenvalues with
+# largest magnitude (default).
 eigenvalues, eigenvectors = eigensolverh(xs, nvalues)
-symm_eigenvalues, symm_eigenvectors = eigensolverh(mat, nvalues)
+
+# Compute two eigenpairs selecting the eigenvalues with
+# largest algebraic value
+selection_rule = "LargestAlge"
+symm_eigenvalues, symm_eigenvectors = eigensolverh(
+  mat, nvalues, selection_rule)
 ```
 **Note**:
 
@@ -103,10 +109,12 @@ xs = np.random.normal(size=size ** 2).reshape(size, size)
 # Create symmetric matrix
 mat = xs + xs.T
 
-# Compute the eigenpairs
+# Compute two eigenpairs selecting the eigenvalues with
+# largest algebraic value
+selection_rule = "LargestAlge"
 symm_eigenvalues, symm_eigenvectors = \
   spectra_dense_interface.symmetric_eigensolver(
-  mat, nvalues, search_space, shift)
+  mat, nvalues, search_space, shift, selection_rule)
 ```
 
 **All functions return a tuple whith the resulting eigenvalues and eigenvectors.**

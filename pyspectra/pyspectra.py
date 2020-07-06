@@ -5,17 +5,50 @@ API
 .. autofunction:: eigensolver
 .. autofunction:: eigensolverh
 """
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 
 import spectra_dense_interface
 
+
 __all__ = ["eigensolver", "eigensolverh"]
+
+rules = {"LargestMagn",
+         "LargestReal",
+         "LargestImag",
+         "LargestAlge",
+         "SmallestReal",
+         "SmallestMagn",
+         "SmallestImag",
+         "SmallestAlge",
+         "BothEnds"}
+
+
+def check_and_sanitize(
+        mat: np.ndarray, nvalues: int, selection_rule: Optional[str],
+        search_space: Optional[int],
+        shift: Optional[Union[np.float, np.complex]]) -> (str, str):
+    """Check that the values are correct and initialize missing values."""
+    if nvalues > mat.shape[0]:
+        raise RuntimeError(
+            "The requested number of eigenpairs is larger than the matrix size")
+    if selection_rule is not None and selection_rule not in rules:
+        raise RuntimeError(f"unknown selection_rule:{selection_rule}")
+    if selection_rule is None:
+        selection_rule = "LargestMagn"
+    if search_space is None:
+        search_space = nvalues * 2
+
+    if shift is not None:
+        if not any(isinstance(shift, x) for x in (np.float, np.complex)):
+            raise RuntimeError("Shift must be None, float or complex")
+
+    return search_space, selection_rule
 
 
 def eigensolver(
-        mat: np.ndarray, nvalues: int, selection_rule: str,
+        mat: np.ndarray, nvalues: int, selection_rule: Optional[str] = None,
         search_space: Optional[int] = None,
         shift: Optional[Union[np.float, np.complex]] = None) -> (np.ndarray, np.ndarray):
     """
@@ -47,7 +80,15 @@ def eigensolver(
     Tuple[np.ndarray, np.ndarray]
         Eigenvalues and eigenvectors
     """
-    pass
+    search_space, selection_rule = check_and_sanitize(
+        mat, nvalues, selection_rule, search_space, shift)
+
+    if shift is None:
+        return spectra_dense_interface.general_eigensolver(mat, nvalues, search_space, selection_rule)
+    if isinstance(shift, np.float):
+        return spectra_dense_interface.general_real_shift_eigensolver(mat, nvalues, search_space, shift, selection_rule)
+    else:
+        return spectra_dense_interface.general_complex_shift_eigensolver(mat, nvalues, search_space, shift, selection_rule)
 
 
 def eigensolverh(
@@ -85,4 +126,12 @@ def eigensolverh(
     Tuple[np.ndarray, np.ndarray]
         Eigenvalues and eigenvectors
     """
-    pass
+    search_space, selection_rule = check_and_sanitize(
+        mat, nvalues, selection_rule, search_space, shift)
+
+    if shift is None:
+        return spectra_dense_interface.symmetric_eigensolver(mat, nvalues, search_space, selection_rule)
+    elif mat_B is None:
+        return spectra_dense_interface.symmetric_shift_eigensolver(mat, nvalues, search_space, shift, selection_rule)
+    else:
+        return spectra_dense_interface.symmetric_generalized_shift_eigensolver(mat, nvalues, search_space, shift, selection_rule)
