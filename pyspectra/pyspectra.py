@@ -34,7 +34,6 @@ def eigensolver(
         LargestMagn, LargestReal, LargestImag, LargestAlge,
         SmallestMagn, SmallestReal, SmallestImag, SmallestAlge
         BothEnds
-
     shift
         scalar value of the shift
 
