@@ -5,7 +5,7 @@ API
 .. autofunction:: eigensolver
 .. autofunction:: eigensolverh
 """
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -24,6 +24,8 @@ rules = {"LargestMagn",
          "SmallestAlge",
          "BothEnds"}
 
+EigenPair = Tuple[np.ndarray, np.ndarray]
+
 
 def check_and_sanitize(
         mat: np.ndarray, nvalues: int, selection_rule: Optional[str],
@@ -31,8 +33,9 @@ def check_and_sanitize(
         shift: Optional[Union[np.float, np.complex]]) -> (str, str):
     """Check that the values are correct and initialize missing values."""
     if nvalues > mat.shape[0]:
-        raise RuntimeError(
-            "The requested number of eigenpairs is larger than the matrix size")
+        msg = "The requested number of eigenpairs is larger than the matrix size"
+        raise RuntimeError(msg)
+
     if selection_rule is not None and selection_rule not in rules:
         raise RuntimeError(f"unknown selection_rule:{selection_rule}")
     if selection_rule is None:
@@ -50,7 +53,7 @@ def check_and_sanitize(
 def eigensolver(
         mat: np.ndarray, nvalues: int, selection_rule: Optional[str] = None,
         search_space: Optional[int] = None,
-        shift: Optional[Union[np.float, np.complex]] = None) -> (np.ndarray, np.ndarray):
+        shift: Optional[Union[np.float, np.complex]] = None) -> EigenPair:
     """
     Compute ``nvalues`` for matrix ``mat``.
 
@@ -96,8 +99,8 @@ def eigensolver(
 
 def eigensolverh(
         mat: np.ndarray, nvalues: int, selection_rule: str,
-        search_space: Optional[int] = None, mat_B: np.ndarray = None,
-        shift: Optional[Union[np.float, np.complex]] = None) -> (np.ndarray, np.ndarray):
+        search_space: Optional[int] = None, generalized: np.ndarray = None,
+        shift: Optional[Union[np.float, np.complex]] = None) -> EigenPair:
     """Compute ``nvalues`` eigenvalues for the symmetric matrix ``mat``.
 
     Parameters
@@ -108,7 +111,7 @@ def eigensolverh(
         Number of eigenpairs to compute
     search_space
         Size of the search space
-    mat_B
+    generalized
         Solve the generalized eigenvalue problem
     selection_rule
         Target of the spectrum to compute. Available values:
@@ -134,9 +137,9 @@ def eigensolverh(
     if shift is None:
         return spectra_dense_interface.symmetric_eigensolver(
             mat, nvalues, search_space, selection_rule)
-    elif mat_B is None:
+    elif generalized is None:
         return spectra_dense_interface.symmetric_shift_eigensolver(
             mat, nvalues, search_space, shift, selection_rule)
     else:
         return spectra_dense_interface.symmetric_generalized_shift_eigensolver(
-            mat, mat_B, nvalues, search_space, shift, selection_rule)
+            mat, generalized, nvalues, search_space, shift, selection_rule)

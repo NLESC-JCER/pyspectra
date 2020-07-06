@@ -22,7 +22,8 @@ SIGMAI = 1.0  # Imag shift
 
 
 def run_test(
-        function: Callable[[T], np.ndarray], args: List[T], selection_rules: Tuple[str],
+        function: Callable[[T], np.ndarray], args: List[T],
+        selection_rules: Tuple[str],
         is_symmetric: bool = True, is_generalized: bool = False) -> None:
     """Call ``function`` with ``args``."""
     for selection in selection_rules:

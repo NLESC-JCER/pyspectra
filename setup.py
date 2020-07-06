@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+"""Install package."""
 import os
 import sys
 from os.path import join
 
 import setuptools
 from Cython.Distutils import build_ext
-from setuptools import Extension, find_packages, setup
+from setuptools import Extension, setup
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -42,7 +43,7 @@ def search_conda():
     return conda_include, conda_lib
 
 
-class get_pybind_include:
+class GetPybindInclude:
     """Helper class to determine the pybind11 include path.
 
     The purpose of this class is to postpone importing pybind11
@@ -134,8 +135,8 @@ include_dirs = (
     'include',
     conda_include,
     eigen_path,
-    get_pybind_include(),
-    get_pybind_include(user=True)
+    GetPybindInclude(),
+    GetPybindInclude(user=True)
 )
 
 library_dirs = [conda_lib]

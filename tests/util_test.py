@@ -20,7 +20,8 @@ def create_symmetic_matrix(size: int) -> np.array:
 
 
 def check_eigenpairs(
-        matrix: np.ndarray, eigenvalues: np.ndarray, eigenvectors: np.ndarray) -> bool:
+        matrix: np.ndarray, eigenvalues: np.ndarray,
+        eigenvectors: np.ndarray) -> bool:
     """Check that the eigenvalue equation holds."""
     for i, value in enumerate(eigenvalues):
         residue = np.dot(
